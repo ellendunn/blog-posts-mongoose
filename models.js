@@ -1,6 +1,7 @@
 "use strict"
 
 const mongoose = require("mongoose");
+mongoose.Promise = global.Promise
 
 const blogPostSchema = mongoose.Schema({
   title: { type: String,required: true },
@@ -8,7 +9,7 @@ const blogPostSchema = mongoose.Schema({
   author: {
     firstName: { type: String,required: true },
     lastName: { type: String,required: true },
-  created: Date,
+  created: {type: String},
   }
 })
 

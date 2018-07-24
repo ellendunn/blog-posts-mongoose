@@ -6,43 +6,40 @@ const mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
 
 const { PORT, DATABASE_URL } = require("./config");
-const { BlogPost } = require("./models");
-
-BlogPost.create({
-	title: 'How to Lose A Guy In 10 Days',
-	content: 'content content content',
-	author: {
-    firstName: 'Andy',
-    lastName: 'Anderson'
-  },
-	created: 'May 15, 2018'});
-BlogPost.create({
-	title: 'Makeup Tutorial for the Low-Budget Professional',
-	content: 'content content content',
-	author: {
-    firstName: 'Sam',
-    lastName: 'Sameulson'
-  },
-	created: 'June 12, 2018'});
+const { BlogPost } = require("./models.js");
 
 const app = express();
-app.use(express.json);
+app.use(express.json());
 
-app.get('/', (req,res) => {
-  res.send('hello')
-})
+// BlogPost.create({
+//   title: 'How to Lose A Guy In 10 Days',
+//   content: 'content content content',
+//   author: {
+//     firstName: 'Andy',
+//     lastName: 'Anderson'
+//   },
+//   created: 'May 15, 2018'});
+
+// BlogPost.create({
+//   title: 'Makeup Tutorial for the Low-Budget Professional',
+//   content: 'content content content',
+//   author: {
+//     firstName: 'Sam',
+//     lastName: 'Sameulson'
+//   },
+//   created: 'June 12, 2018'});
+
 
 app.get("/posts", (req,res) => {
-  console.log('hello');
   BlogPost.find()
-  .then(posts => {
+    .then(posts => {
     res.json({
       posts: posts.map(post => post.serialize())
     });
   })
   .catch(err => {
     console.error(err);
-    res.status(500).json({ message: "Internal Serer Error"})
+    res.status(500).json({ message: "Internal Server Error"})
   })
 });
 
@@ -70,8 +67,7 @@ app.post("/posts", (req, res) => {
   BlogPost.create({
     title: req.body.title,
     content: req.body.content,
-    author: req.body.author,
-    created: req.body.created
+    author: req.body.author
   })
     .then(post => res.status(201).json(post.serialize()))
     .catch(err => {
@@ -118,14 +114,11 @@ let server;
 
 function runServer(databaseUrl, port = PORT) {
   return new Promise((resolve, reject) => {
-    mongoose.connect(
-      databaseUrl,
-      err => {
+    mongoose.connect(databaseUrl, err => {
         if (err) {
           return reject(err);
         }
-        server = app
-          .listen(port, () => {
+        server = app.listen(port, () => {
             console.log(`Your App is listening on port ${port}`);
             resolve();
           })
