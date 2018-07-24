@@ -1,0 +1,33 @@
+{
+  "name": "blog-posts-mongoose",
+  "version": "1.0.0",
+  "main": "server.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "chai": "^4.1.2",
+    "chai-http": "^4.0.0",
+    "express": "^4.16.3",
+    "mongoose": "^5.2.5",
+    "nodemon": "^1.18.3"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
+  },
+  "scripts": {
+    "test": "mocha",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ellendunn/blog-posts-mongoose.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ellendunn/blog-posts-mongoose/issues"
+  },
+  "homepage": "https://github.com/ellendunn/blog-posts-mongoose#readme",
+  "description": ""
+}
