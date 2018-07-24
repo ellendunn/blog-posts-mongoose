@@ -1,7 +1,7 @@
 "use strict"
 
 const mongoose = require("mongoose");
-mongoose.Promise = global.Promise
+mongoose.Promise = global.Promise // why is this in here twice?
 
 const blogPostSchema = mongoose.Schema({
   title: { type: String,required: true },
@@ -27,6 +27,6 @@ blogPostSchema.methods.serialize = function() {
   }
 }
 
-const BlogPost = mongoose.model("BlogPost", blogPostSchema);
+const BlogPost = mongoose.model("blogpost", blogPostSchema);
 
 module.exports = { BlogPost };

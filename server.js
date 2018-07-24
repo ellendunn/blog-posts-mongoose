@@ -114,6 +114,7 @@ let server;
 
 function runServer(databaseUrl, port = PORT) {
   return new Promise((resolve, reject) => {
+    console.log(databaseUrl);
     mongoose.connect(databaseUrl, err => {
         if (err) {
           return reject(err);
