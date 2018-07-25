@@ -45,7 +45,7 @@ app.get("/posts", (req,res) => {
 
 app.get("/posts/:id", (req, res) => {
   BlogPost
-    .findByID(req.params.id)
+    .findById(req.params.id)
     .then(post => res.json(post.serialize()))
     .catch(err => {
       console.error(err);
@@ -114,7 +114,6 @@ let server;
 
 function runServer(databaseUrl, port = PORT) {
   return new Promise((resolve, reject) => {
-    console.log(databaseUrl);
     mongoose.connect(databaseUrl, err => {
         if (err) {
           return reject(err);
