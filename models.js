@@ -3,21 +3,21 @@
 const mongoose = require("mongoose");
 mongoose.Promise = global.Promise 
 
-const commentSchema = mongoose.Schema({ content: String });
-
-const authorSchema = mongoose.Schema({
-  firstName: String,
-  lastName: String,
+let authorSchema = mongoose.Schema({
+  firstName: 'string',
+  lastName: 'string',
   userName: {
-    type: String, unique: true
+    type: 'string', unique: true
   }
 })
 
+const commentSchema = mongoose.Schema({ content: 'string' });
+
 const blogPostSchema = mongoose.Schema({
-  title: { type: String,required: true },
-  content: { type: String,required: true },
+  title: { type: 'string',required: true },
+  content: { type: 'string',required: true },
   author: { type: mongoose.Schema.Types.ObjectId, ref: "Author"},
-  created: {type: String},
+  created: {type: 'string'},
   comments: [commentSchema]
   })
 
@@ -31,14 +31,13 @@ blogPostSchema.pre("findOne", function(next) {
   next()
 });
 
-blogPostSchema.pre("findOneAndUpdate", function(next) {
-  this.populate("author");
-  next()
-})
+// blogPostSchema.pre("findOneAndUpdate", function(next) {
+//   this.populate("author");
+//   next()
+// })
 
-
-authorSchema.virtual("authorName").get(function() {
-  return `${this.firstName} ${this.lastName}`.trim();
+blogPostSchema.virtual("authorName").get(function() {
+  return `${this.author.firstName} ${this.author.lastName}`.trim();
 });
 
 blogPostSchema.methods.serialize = function() {
@@ -60,7 +59,7 @@ authorSchema.methods.serialize = function() {
   }
 }
 
-const Author = mongoose.model("Author", authorSchema);
+let Author = mongoose.model("Author", authorSchema);
 const BlogPost = mongoose.model("blogpost", blogPostSchema);
 
 module.exports = { BlogPost, Author };

@@ -14,9 +14,14 @@ app.use(express.json());
 app.get("/posts", (req,res) => {
   BlogPost.find()
     .then(posts => {
-    res.json({
-      posts: posts.map(post => post.serialize())
-    });
+    res.json(posts.map(post => {
+        return {
+          id: post._id,
+          title: post.title,
+          author: post.authorName,
+          content: post.content
+        };
+      }))
   })
   .catch(err => {
     console.error(err);
@@ -35,10 +40,17 @@ app.get("/posts/:id", (req, res) => {
 });
 
 app.get("/authors", (req, res) => {
-  Author.find()
+  Author
+    .find()
     .then(authors => {
-      res.json(authors)
-    })
+      res.json(authors.map(author => {
+        return {
+          id: author._id,
+          name: `${author.firstName} ${author.lastName}`,
+          userName: author.userName
+        };
+      }));
+    }) 
     .catch(err => {
       console.error(err);
       res.status(500).json({message: "something went wrong!"})
@@ -57,7 +69,7 @@ app.get("/authors/:id", (req,res) => {
 })
 
 app.post("/posts", (req, res) => {
-  const requiredFields = ["title", "content", "author"];
+  const requiredFields = ["title", "content", "author_id"];
   for (let i=0; i<requiredFields.length; i++) {
     const field = requiredFields[i];
     if (!(field in req.body)) {
@@ -68,25 +80,36 @@ app.post("/posts", (req, res) => {
   }
 
   Author
-    .create({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      userName: req.body.userName
-    })
+    .findById(req.body.author_id)
     .then(author => {
-      console.log(author);
-      BlogPost.create({
-        title: req.body.title,
-        content: req.body.content,
-        author: req.body.author
-      })
-    .then(post => res.status(201).json(post.serialize()))
+      if (author) {
+        BlogPost.create({
+          title: req.body.title,
+          author: req.body.id,
+          content: req.body.content
+        })
+        .then(post => res.status(201).json({
+          id: post.id,
+          title: post.title,
+          author: `${author.firstName} ${author.lastName}`,
+          content: post.content,
+          comments: post.comments,
+        }))
+        .catch(err => {
+          console.error(err);
+          res.status(500).json({message: "Internal Server Error"});
+          });
+      } else {
+        const message = 'Author not found';
+        console.error(message);
+        return res.status(400).send(message)
+      }
+    })
     .catch(err => {
       console.error(err);
       res.status(500).json({message: "Internal Server Error"});
       });
-    });
-});
+  });
 
 app.post("/authors", (req, res) => {
   const requiredFields = ["firstName", "lastName", "userName"];
@@ -95,16 +118,31 @@ app.post("/authors", (req, res) => {
     if (!(field in req.body)) {
       const message = `Missing \`${field}\` in request body`;
       console.error(message);
-      return res.status(400).send(messate)
+      return res.status(400).send(message)
     }
-  }
+  };
 
-  Author.create({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      userName: req.body.userName
+  Author
+    .findOne({userName: req.body.userName})
+    .then(author => {
+      if (author) {
+        const message = 'Usernaame already exists';
+        console.error(message);
+        return res.status(400).send(message);
+      }else{
+        Author
+          .create({
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            userName: req.body.userName
+          })
+          .then(author => res.status(201).json(author.serialize()))
+          .catch(err => {
+            console.error(err);
+            res.status(500).json({message: "Internal Server Error"})
+          });
+      }
     })
-    .then(author => res.status(201).json(author.serialize()))
     .catch(err => {
       console.error(err);
       res.status(500).json({message: "Internal Server Error"})
@@ -122,7 +160,6 @@ app.put("/posts/:id", (req,res) => {
 
   const toUpdate = {};
   const updateableFields = ["title", "content"];
-
   updateableFields.forEach(field => {
     if (field in req.body) {
       toUpdate[field] = req.body[field];
@@ -131,39 +168,66 @@ app.put("/posts/:id", (req,res) => {
 
   BlogPost
     .findOneAndUpdate({_id: req.params.id}, {$set : toUpdate})
-    .then(post => res.status(204).end())
+    .then(post => res.status(204).json({
+      id: post.id,
+      title: post.title,
+      content: post.content
+    }))
     .catch(err => res.status(500).json({message: "Internal Server Error"}));
 });
 
 app.put("/authors/:id", (req, res) => {
-  if (!(req.params.id && req.body._id && req.params.id === req.body._id)) {
+  if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
     const message = `Request path id ${req.params.id} must match`
-                    + ` request body id ${req.body._id}`;
+                    + ` request body id ${req.body.id}`;
     console.error(message);
     return res.status(400).json({message});
   }
 
   const toUpdate= {};
   const updateableFields = ["firstName", "lastName", "userName"];
-
   updateableFields.forEach(field => {
     if (field in req.body) {
       toUpdate[field] = req.body[field];
     }
   });
 
-  Author
-    .findOneAndUpdate({_id: req.params.id}, {$set: toUpdate})
-    .then(author => res.status(204).end())
-    .catch(err => res.status(500).json({message: "somesing went bad"}));
-})
+  Author //what does this line underneath mean
+    .findOne({userName: toUpdate.userName || '', _id: {$ne: req.params.id}})
+    .then(author => {
+      if (author) {
+        const message = 'username already exists';
+        console.error(message);
+        return res.status(400).send(message);
+      } else {
+        Author
+          .findByIdAndUpdate({_id: req.params.id}, {$set: toUpdate})
+          .then(author => {
+            res.status(204).json({
+              id: author.id,
+              name: `${author.firstName} ${author.lastName}`,
+              userName: author.userName 
+            });
+          })
+        .catch(err => res.status(500).json({message: "somesing went bad"}));
+      }
+    });
+});
 
 app.delete("/authors/:id", (req,res) => {
-  Author
-    .findByIdAndRemove(req.params.id)
-    .then(author => res.status(204).end())
+  BlogPost
+    .remove({author: req.params.id})
+    .then(() => {
+      Author
+        .findByIdAndRemove(req.params.id)
+        .then(() => {
+          res.status(204).json({message: 'Deleted blog posts owned by author'})
+        });
+      })
     .catch(err => res.status(500).json({message: "Not good!"}));
 })
+
+      
 
 app.delete("/posts/:id", (req, res) => {
   BlogPost
